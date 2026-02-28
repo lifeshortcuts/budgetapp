@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from db.crud import get_transactions
+from db.crud import get_budget_vs_actual, get_transactions
 from db.database import init_db
 from db.seed import seed_categories
 
@@ -125,3 +125,72 @@ if not expense_df.empty:
     top = top.sort_values("Total", ascending=False).head(10)
     top["Total"] = top["Total"].map(lambda x: f"£{x:,.2f}")
     st.dataframe(top, hide_index=True, use_container_width=True)
+
+# --- Budget Tracker ---
+st.markdown("---")
+st.subheader("🎯 Budget Tracker")
+
+budget_data = get_budget_vs_actual(today.year, today.month)
+
+if not budget_data:
+    st.info("No budgets set yet. Go to the **Budgets** page to set monthly targets.")
+else:
+    tab_month, tab_year = st.tabs(
+        [f"This Month ({today.strftime('%B %Y')})", f"This Year ({today.year})"]
+    )
+
+    with tab_month:
+        st.caption(
+            "🟢 ≤75% used  🟡 75–100% used  🔴 over budget  |  "
+            "Remaining = Budget − Actual for the month"
+        )
+        rows = []
+        for b in budget_data:
+            pct = b["monthly_pct"]
+            status = "🟢" if pct <= 75 else ("🟡" if pct <= 100 else "🔴")
+            rows.append({
+                " ": status,
+                "Type": b["type"],
+                "Category": b["category"],
+                "Budget": f"£{b['monthly_budget']:,.2f}",
+                "Actual": f"£{b['monthly_actual']:,.2f}",
+                "Remaining": f"£{b['monthly_remaining']:,.2f}",
+                "% Used": f"{pct:.0f}%",
+            })
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+        month_budget_total = sum(b["monthly_budget"] for b in budget_data if b["flow_type"] == "expense")
+        month_actual_total = sum(b["monthly_actual"] for b in budget_data if b["flow_type"] == "expense")
+        mb1, mb2, mb3 = st.columns(3)
+        mb1.metric("Total Budget (month)", f"£{month_budget_total:,.2f}")
+        mb2.metric("Total Actual (month)", f"£{month_actual_total:,.2f}")
+        mb3.metric("Remaining (month)", f"£{month_budget_total - month_actual_total:,.2f}")
+
+    with tab_year:
+        st.caption(
+            f"YTD Budget = Monthly Budget × {today.month} months elapsed  |  "
+            "Projected Annual extrapolates your current spend rate"
+        )
+        rows = []
+        for b in budget_data:
+            diff = b["ytd_diff"]
+            status = "🟢" if diff <= 0 else ("🟡" if diff <= b["ytd_budget"] * 0.1 else "🔴")
+            rows.append({
+                " ": status,
+                "Type": b["type"],
+                "Category": b["category"],
+                "Annual Budget": f"£{b['annual_budget']:,.2f}",
+                f"YTD Budget ({today.month}m)": f"£{b['ytd_budget']:,.2f}",
+                "YTD Actual": f"£{b['ytd_actual']:,.2f}",
+                "vs YTD Budget": f"£{diff:,.2f}",
+                "Projected Annual": f"£{b['projected_annual']:,.2f}" if b["projected_annual"] else "—",
+            })
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
+        annual_budget_total = sum(b["annual_budget"] for b in budget_data if b["flow_type"] == "expense")
+        ytd_actual_total = sum(b["ytd_actual"] for b in budget_data if b["flow_type"] == "expense")
+        projected_total = sum(b["projected_annual"] for b in budget_data if b["flow_type"] == "expense")
+        yb1, yb2, yb3 = st.columns(3)
+        yb1.metric("Annual Budget (expenses)", f"£{annual_budget_total:,.2f}")
+        yb2.metric("YTD Actual (expenses)", f"£{ytd_actual_total:,.2f}")
+        yb3.metric("Projected Annual", f"£{projected_total:,.2f}")

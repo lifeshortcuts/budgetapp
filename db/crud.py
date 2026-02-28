@@ -51,6 +51,7 @@ def get_all_categories():
 def add_transaction(date, amount, category_id, description, notes="", source="manual"):
     session = get_session()
     try:
+        cat = session.query(Category).filter(Category.id == category_id).first()
         tx = Transaction(
             date=date,
             amount=amount,
@@ -58,6 +59,7 @@ def add_transaction(date, amount, category_id, description, notes="", source="ma
             description=description,
             notes=notes,
             source=source,
+            flow_type=cat.flow_type if cat else None,
         )
         session.add(tx)
         session.commit()
@@ -91,9 +93,9 @@ def get_transactions(start_date=None, end_date=None):
                     "notes": tx.notes or "",
                     "subtype": cat.name,
                     "type": parent.name if parent else cat.name,
-                    "flow_type": cat.flow_type,
+                    "flow_type": tx.flow_type or cat.flow_type,
                     "category_id": tx.category_id,
-                    "source": tx.source,
+                    "source": tx.source or "manual",
                 }
             )
         return result
@@ -291,6 +293,7 @@ def process_recurring_transactions():
                 if rec.end_date and run_date > rec.end_date.date():
                     rec.active = False
                     break
+                cat = session.query(Category).filter(Category.id == rec.category_id).first()
                 session.add(Transaction(
                     date=datetime.combine(run_date, datetime.min.time()),
                     amount=rec.amount,
@@ -298,6 +301,7 @@ def process_recurring_transactions():
                     description=rec.description or f"Recurring ({rec.frequency})",
                     notes=rec.notes or "",
                     source="recurring",
+                    flow_type=cat.flow_type if cat else None,
                 ))
                 created += 1
                 run_date = _next_date(run_date, rec.frequency)
@@ -404,5 +408,57 @@ def delete_category(cat_id):
             session.delete(cat)
             session.commit()
         return True, "Deleted successfully."
+    finally:
+        session.close()
+
+
+# ---------------------------------------------------------------------------
+# CSV import helpers
+# ---------------------------------------------------------------------------
+
+def build_subcat_name_map():
+    """Returns {subcategory_name_lowercase: category_id} for all subcategories."""
+    session = get_session()
+    try:
+        children = session.query(Category).filter(Category.parent_id.isnot(None)).all()
+        return {c.name.lower(): c.id for c in children}
+    finally:
+        session.close()
+
+
+def get_uncategorised_ids():
+    """Returns (expense_uncat_id, income_fallback_id) for rows that cannot be mapped."""
+    session = get_session()
+    try:
+        expense_uncat = session.query(Category).filter(
+            Category.name == "Uncategorised", Category.flow_type == "expense"
+        ).first()
+        income_other = session.query(Category).filter(
+            Category.name == "Other Income", Category.flow_type == "income"
+        ).first()
+        return (
+            expense_uncat.id if expense_uncat else None,
+            income_other.id if income_other else None,
+        )
+    finally:
+        session.close()
+
+
+def bulk_import_transactions(valid_rows):
+    """Insert a list of pre-validated transaction dicts. Returns count inserted."""
+    session = get_session()
+    try:
+        for row in valid_rows:
+            session.add(Transaction(
+                date=row["date"],
+                amount=row["amount"],
+                category_id=row["category_id"],
+                description=row["description"],
+                notes="",
+                source="import",
+                flow_type=row["flow_type"],
+            ))
+        session.commit()
+        return len(valid_rows)
     finally:
         session.close()

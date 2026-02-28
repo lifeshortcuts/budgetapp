@@ -1,6 +1,6 @@
 import os
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from .models import Base
@@ -16,6 +16,13 @@ SessionLocal = sessionmaker(bind=engine)
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Migration: add flow_type column if it doesn't exist (safe for existing databases)
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE transactions ADD COLUMN flow_type TEXT"))
+            conn.commit()
+        except Exception:
+            pass  # Column already exists — no action needed
 
 
 def get_session():

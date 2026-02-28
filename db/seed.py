@@ -50,9 +50,29 @@ SEED_DATA = [
     {
         "name": "Other",
         "flow_type": "expense",
-        "subtypes": ["Miscellaneous"],
+        "subtypes": ["Miscellaneous", "Uncategorised"],
     },
 ]
+
+
+def ensure_uncategorised_category():
+    """Ensure the Uncategorised subcategory exists — safe to call on existing databases."""
+    session = get_session()
+    try:
+        existing = session.query(Category).filter(
+            Category.name == "Uncategorised", Category.flow_type == "expense"
+        ).first()
+        if not existing:
+            other = session.query(Category).filter(
+                Category.name == "Other",
+                Category.flow_type == "expense",
+                Category.parent_id.is_(None),
+            ).first()
+            if other:
+                session.add(Category(name="Uncategorised", flow_type="expense", parent_id=other.id))
+                session.commit()
+    finally:
+        session.close()
 
 
 def seed_categories():

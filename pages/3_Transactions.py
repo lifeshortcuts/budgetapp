@@ -29,8 +29,12 @@ with st.expander("Filters", expanded=True):
         flow_filter = st.multiselect(
             "Flow type", ["Income", "Expense"], default=["Income", "Expense"]
         )
+        source_filter = st.multiselect(
+            "Source", ["manual", "import", "recurring"], default=["manual", "import", "recurring"]
+        )
     with fc3:
         search = st.text_input("Search description")
+        show_uncat = st.checkbox("Show only Uncategorised", value=False)
 
 start_dt = datetime.combine(start_date, datetime.min.time())
 end_dt = datetime.combine(end_date, datetime.max.time())
@@ -47,6 +51,10 @@ df["date"] = pd.to_datetime(df["date"]).dt.date
 # Apply filters
 if flow_filter:
     df = df[df["flow_type"].isin([f.lower() for f in flow_filter])]
+if source_filter:
+    df = df[df["source"].isin(source_filter)]
+if show_uncat:
+    df = df[df["subtype"] == "Uncategorised"]
 if search:
     df = df[df["description"].str.contains(search, case=False, na=False)]
 
@@ -55,8 +63,8 @@ if df.empty:
     st.stop()
 
 # --- Display table ---
-display_df = df[["id", "date", "flow_type", "type", "subtype", "description", "amount"]].copy()
-display_df.columns = ["ID", "Date", "Flow", "Type", "Subtype", "Description", "Amount (£)"]
+display_df = df[["id", "date", "flow_type", "type", "subtype", "description", "amount", "source"]].copy()
+display_df.columns = ["ID", "Date", "Flow", "Type", "Subtype", "Description", "Amount (£)", "Source"]
 display_df["Flow"] = display_df["Flow"].str.capitalize()
 display_df["Amount (£)"] = display_df["Amount (£)"].map(lambda x: f"£{x:,.2f}")
 

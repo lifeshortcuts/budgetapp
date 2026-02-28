@@ -27,7 +27,8 @@ class Transaction(Base):
     description = Column(String(200), default="")
     notes = Column(Text, default="")
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
-    source = Column(String(20), default="manual")  # 'manual' or 'import'
+    source = Column(String(20), default="manual")   # 'manual', 'import', or 'recurring'
+    flow_type = Column(String(10), nullable=True)    # 'income' or 'expense' — stored directly for import rows
     created_at = Column(DateTime, default=datetime.utcnow)
 
     category = relationship("Category", back_populates="transactions")

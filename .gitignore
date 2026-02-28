@@ -19,3 +19,6 @@ env/
 # Editor
 .vscode/
 .idea/
+
+# CSV files may contain personal financial data — keep local only
+*.csv

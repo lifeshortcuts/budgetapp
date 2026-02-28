@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-from db.crud import delete_budget, get_all_categories, get_budgets, set_budget
+from db.crud import delete_budget, get_budgets, get_parent_categories, set_budget
 from db.database import init_db
 from db.seed import seed_categories
 
@@ -11,8 +11,8 @@ seed_categories()
 st.set_page_config(page_title="Budgets", page_icon="🎯", layout="wide")
 st.title("🎯 Budget Settings")
 st.markdown(
-    "Set a **monthly** budget for any category or subcategory. "
-    "The dashboard will show how you're tracking month-by-month and year-to-date."
+    "Set a **monthly budget per top-level category** (e.g. Food, Transport). "
+    "All subcategory spending rolls up to track against it."
 )
 st.markdown("---")
 
@@ -24,9 +24,7 @@ if budgets:
     display = []
     for b in budgets:
         display.append({
-            "Level": "Subtype" if b["is_subtype"] else "Type",
             "Flow": b["flow_type"].capitalize(),
-            "Type": b["type"],
             "Category": b["category"],
             "Monthly ($)": f"${b['monthly_amount']:,.2f}",
             "Annual ($)": f"${b['annual_amount']:,.2f}",
@@ -48,17 +46,13 @@ st.markdown("---")
 # --- Set / update a budget ---
 st.subheader("Set or Update a Budget")
 
-all_cats = get_all_categories()
-cat_options = {}
-for c in all_cats:
-    level = "subtype" if c["parent_id"] else "type"
-    label = f"[{c['flow_type'].upper()}] {c['name']} ({level})"
-    cat_options[label] = c
+# Only top-level (parent) categories
+all_parents = get_parent_categories()
+cat_options = {f"[{c['flow_type'].upper()}] {c['name']}": c for c in all_parents}
 
 selected_cat_key = st.selectbox("Category", list(cat_options.keys()))
 selected_cat = cat_options[selected_cat_key]
 
-# Pre-populate if a budget already exists for this category
 existing = next((b for b in budgets if b["category_id"] == selected_cat["id"]), None)
 
 col1, col2 = st.columns(2)
@@ -77,8 +71,8 @@ with col2:
 
 if existing:
     st.caption(
-        f"A budget of ${existing['monthly_amount']:,.2f}/month already exists for **{selected_cat['name']}**. "
-        "Saving will update it."
+        f"A budget of ${existing['monthly_amount']:,.2f}/month already exists for "
+        f"**{selected_cat['name']}**. Saving will update it."
     )
 
 if st.button("Save Budget", type="primary"):
@@ -95,7 +89,7 @@ if budgets:
     st.markdown("---")
     with st.expander("🗑️ Remove a Budget"):
         budget_options = {
-            f"{b['category']} ({b['type']}) — ${b['monthly_amount']:,.2f}/month": b["id"]
+            f"{b['category']} — ${b['monthly_amount']:,.2f}/month": b["id"]
             for b in budgets
         }
         selected_to_del = st.selectbox("Select budget to remove", list(budget_options.keys()))

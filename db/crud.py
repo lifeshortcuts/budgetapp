@@ -217,26 +217,40 @@ def get_budget_vs_actual(year, month):
             .all()
         )
 
+        # Budgets are set at the top-level (parent) category.
+        # Actuals are summed across ALL subcategories under each parent.
         rows = session.query(Budget, Category).join(Category, Budget.category_id == Category.id).all()
         result = []
         for b, cat in rows:
-            parent = (
-                session.query(Category).filter(Category.id == cat.parent_id).first()
-                if cat.parent_id
-                else None
+            subcats = (
+                session.query(Category)
+                .filter(Category.parent_id == cat.id)
+                .order_by(Category.name)
+                .all()
             )
-            monthly_actual = monthly_actuals.get(cat.id, 0.0)
-            ytd_actual = ytd_actuals.get(cat.id, 0.0)
+            all_ids = [cat.id] + [s.id for s in subcats]
+
+            monthly_actual = sum(monthly_actuals.get(cid, 0.0) for cid in all_ids)
+            ytd_actual = sum(ytd_actuals.get(cid, 0.0) for cid in all_ids)
             ytd_budget = b.monthly_amount * month
             annual_budget = b.monthly_amount * 12
             projected = (ytd_actual / month * 12) if month > 0 and ytd_actual > 0 else 0.0
 
+            # Per-subcategory breakdown (only include subcats that have activity)
+            subcategories = [
+                {
+                    "name": s.name,
+                    "monthly_actual": monthly_actuals.get(s.id, 0.0),
+                    "ytd_actual": ytd_actuals.get(s.id, 0.0),
+                }
+                for s in subcats
+                if monthly_actuals.get(s.id, 0.0) > 0 or ytd_actuals.get(s.id, 0.0) > 0
+            ]
+
             result.append({
                 "category_id": cat.id,
                 "category": cat.name,
-                "type": parent.name if parent else cat.name,
                 "flow_type": cat.flow_type,
-                "is_subtype": cat.parent_id is not None,
                 # Monthly
                 "monthly_budget": b.monthly_amount,
                 "monthly_actual": monthly_actual,
@@ -248,8 +262,10 @@ def get_budget_vs_actual(year, month):
                 "ytd_actual": ytd_actual,
                 "ytd_diff": ytd_actual - ytd_budget,
                 "projected_annual": projected,
+                # Subcategory detail
+                "subcategories": subcategories,
             })
-        return sorted(result, key=lambda x: (x["flow_type"], x["type"], x["category"]))
+        return sorted(result, key=lambda x: (x["flow_type"], x["category"]))
     finally:
         session.close()
 

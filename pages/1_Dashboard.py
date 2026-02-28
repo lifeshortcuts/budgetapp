@@ -140,23 +140,30 @@ else:
     )
 
     with tab_month:
-        st.caption(
-            "🟢 ≤75% used  🟡 75–100% used  🔴 over budget  |  "
-            "Remaining = Budget − Actual for the month"
-        )
+        st.caption("🟢 ≤75% used  🟡 75–100% used  🔴 over budget")
         rows = []
         for b in budget_data:
             pct = b["monthly_pct"]
             status = "🟢" if pct <= 75 else ("🟡" if pct <= 100 else "🔴")
+            # Parent budget row
             rows.append({
                 " ": status,
-                "Type": b["type"],
                 "Category": b["category"],
                 "Budget": f"${b['monthly_budget']:,.2f}",
                 "Actual": f"${b['monthly_actual']:,.2f}",
                 "Remaining": f"${b['monthly_remaining']:,.2f}",
                 "% Used": f"{pct:.0f}%",
             })
+            # Subcategory detail rows (indented, no budget/remaining columns)
+            for s in b["subcategories"]:
+                rows.append({
+                    " ": "",
+                    "Category": f"  └ {s['name']}",
+                    "Budget": "",
+                    "Actual": f"${s['monthly_actual']:,.2f}",
+                    "Remaining": "",
+                    "% Used": "",
+                })
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
         month_budget_total = sum(b["monthly_budget"] for b in budget_data if b["flow_type"] == "expense")
@@ -175,9 +182,9 @@ else:
         for b in budget_data:
             diff = b["ytd_diff"]
             status = "🟢" if diff <= 0 else ("🟡" if diff <= b["ytd_budget"] * 0.1 else "🔴")
+            # Parent budget row
             rows.append({
                 " ": status,
-                "Type": b["type"],
                 "Category": b["category"],
                 "Annual Budget": f"${b['annual_budget']:,.2f}",
                 f"YTD Budget ({today.month}m)": f"${b['ytd_budget']:,.2f}",
@@ -185,6 +192,17 @@ else:
                 "vs YTD Budget": f"${diff:,.2f}",
                 "Projected Annual": f"${b['projected_annual']:,.2f}" if b["projected_annual"] else "—",
             })
+            # Subcategory detail rows
+            for s in b["subcategories"]:
+                rows.append({
+                    " ": "",
+                    "Category": f"  └ {s['name']}",
+                    "Annual Budget": "",
+                    f"YTD Budget ({today.month}m)": "",
+                    "YTD Actual": f"${s['ytd_actual']:,.2f}",
+                    "vs YTD Budget": "",
+                    "Projected Annual": "",
+                })
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
         annual_budget_total = sum(b["annual_budget"] for b in budget_data if b["flow_type"] == "expense")

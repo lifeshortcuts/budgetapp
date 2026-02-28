@@ -28,8 +28,8 @@ if budgets:
             "Flow": b["flow_type"].capitalize(),
             "Type": b["type"],
             "Category": b["category"],
-            "Monthly (£)": f"£{b['monthly_amount']:,.2f}",
-            "Annual (£)": f"£{b['annual_amount']:,.2f}",
+            "Monthly ($)": f"${b['monthly_amount']:,.2f}",
+            "Annual ($)": f"${b['annual_amount']:,.2f}",
             "Notes": b["notes"],
         })
     st.dataframe(pd.DataFrame(display), hide_index=True, use_container_width=True)
@@ -38,8 +38,8 @@ if budgets:
     if expense_budgets:
         total_monthly = sum(b["monthly_amount"] for b in expense_budgets)
         m1, m2 = st.columns(2)
-        m1.metric("Total Monthly Expense Budget", f"£{total_monthly:,.2f}")
-        m2.metric("Total Annual Expense Budget", f"£{total_monthly * 12:,.2f}")
+        m1.metric("Total Monthly Expense Budget", f"${total_monthly:,.2f}")
+        m2.metric("Total Annual Expense Budget", f"${total_monthly * 12:,.2f}")
 else:
     st.info("No budgets set yet. Add your first one below.")
 
@@ -65,19 +65,19 @@ col1, col2 = st.columns(2)
 with col1:
     current_val = float(existing["monthly_amount"]) if existing else 1.0
     monthly_amount = st.number_input(
-        "Monthly Budget (£)",
+        "Monthly Budget ($)",
         value=current_val,
         min_value=0.01,
         step=10.0,
         format="%.2f",
     )
-    st.caption(f"Annual equivalent: **£{monthly_amount * 12:,.2f}**")
+    st.caption(f"Annual equivalent: **${monthly_amount * 12:,.2f}**")
 with col2:
     notes = st.text_input("Notes (optional)", value=existing["notes"] if existing else "")
 
 if existing:
     st.caption(
-        f"A budget of £{existing['monthly_amount']:,.2f}/month already exists for **{selected_cat['name']}**. "
+        f"A budget of ${existing['monthly_amount']:,.2f}/month already exists for **{selected_cat['name']}**. "
         "Saving will update it."
     )
 
@@ -85,8 +85,8 @@ if st.button("Save Budget", type="primary"):
     set_budget(selected_cat["id"], monthly_amount, notes)
     action = "Updated" if existing else "Set"
     st.success(
-        f"{action}: **£{monthly_amount:,.2f}/month** for {selected_cat['name']} "
-        f"(£{monthly_amount * 12:,.2f}/year)"
+        f"{action}: **${monthly_amount:,.2f}/month** for {selected_cat['name']} "
+        f"(${monthly_amount * 12:,.2f}/year)"
     )
     st.rerun()
 
@@ -95,7 +95,7 @@ if budgets:
     st.markdown("---")
     with st.expander("🗑️ Remove a Budget"):
         budget_options = {
-            f"{b['category']} ({b['type']}) — £{b['monthly_amount']:,.2f}/month": b["id"]
+            f"{b['category']} ({b['type']}) — ${b['monthly_amount']:,.2f}/month": b["id"]
             for b in budgets
         }
         selected_to_del = st.selectbox("Select budget to remove", list(budget_options.keys()))

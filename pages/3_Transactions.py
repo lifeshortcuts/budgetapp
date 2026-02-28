@@ -64,9 +64,9 @@ if df.empty:
 
 # --- Display table ---
 display_df = df[["id", "date", "flow_type", "type", "subtype", "description", "amount", "source"]].copy()
-display_df.columns = ["ID", "Date", "Flow", "Type", "Subtype", "Description", "Amount (£)", "Source"]
+display_df.columns = ["ID", "Date", "Flow", "Type", "Subtype", "Description", "Amount ($)", "Source"]
 display_df["Flow"] = display_df["Flow"].str.capitalize()
-display_df["Amount (£)"] = display_df["Amount (£)"].map(lambda x: f"£{x:,.2f}")
+display_df["Amount ($)"] = display_df["Amount ($)"].map(lambda x: f"${x:,.2f}")
 
 st.dataframe(display_df, hide_index=True, use_container_width=True)
 
@@ -74,9 +74,9 @@ totals = df.groupby("flow_type")["amount"].sum()
 income_total = totals.get("income", 0)
 expense_total = totals.get("expense", 0)
 m1, m2, m3 = st.columns(3)
-m1.metric("Income (filtered)", f"£{income_total:,.2f}")
-m2.metric("Expenses (filtered)", f"£{expense_total:,.2f}")
-m3.metric("Net (filtered)", f"£{income_total - expense_total:,.2f}")
+m1.metric("Income (filtered)", f"${income_total:,.2f}")
+m2.metric("Expenses (filtered)", f"${expense_total:,.2f}")
+m3.metric("Net (filtered)", f"${income_total - expense_total:,.2f}")
 
 csv = df.to_csv(index=False)
 st.download_button("Export to CSV", csv, "transactions.csv", "text/csv")
@@ -86,7 +86,7 @@ st.markdown("---")
 # --- Delete ---
 with st.expander("🗑️ Delete a Transaction"):
     options = {
-        f"#{row['id']} | {row['date']} | £{row['amount']:.2f} | {row['subtype']} | {row['description']}": row[
+        f"#{row['id']} | {row['date']} | ${row['amount']:.2f} | {row['subtype']} | {row['description']}": row[
             "id"
         ]
         for _, row in df.iterrows()
@@ -103,7 +103,7 @@ st.markdown("---")
 # --- Edit ---
 with st.expander("✏️ Edit a Transaction"):
     edit_options = {
-        f"#{row['id']} | {row['date']} | £{row['amount']:.2f} | {row['subtype']} | {row['description']}": row
+        f"#{row['id']} | {row['date']} | ${row['amount']:.2f} | {row['subtype']} | {row['description']}": row
         for _, row in df.iterrows()
     }
     selected_edit_key = st.selectbox(
@@ -137,7 +137,7 @@ with st.expander("✏️ Edit a Transaction"):
     with ec1:
         new_date = st.date_input("Date", value=row["date"], key="edit_date")
         new_amount = st.number_input(
-            "Amount (£)", value=float(row["amount"]), min_value=0.01, step=0.01, key="edit_amount"
+            "Amount ($)", value=float(row["amount"]), min_value=0.01, step=0.01, key="edit_amount"
         )
     with ec2:
         new_desc = st.text_input("Description", value=row["description"], key="edit_desc")

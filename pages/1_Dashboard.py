@@ -68,9 +68,9 @@ net = total_income - total_expenses
 # --- KPI Cards ---
 st.markdown("---")
 k1, k2, k3 = st.columns(3)
-k1.metric("Total Income", f"£{total_income:,.2f}")
-k2.metric("Total Expenses", f"£{total_expenses:,.2f}")
-k3.metric("Net", f"£{net:,.2f}", delta=f"£{net:,.2f}")
+k1.metric("Total Income", f"${total_income:,.2f}")
+k2.metric("Total Expenses", f"${total_expenses:,.2f}")
+k3.metric("Net", f"${net:,.2f}", delta=f"${net:,.2f}")
 st.markdown("---")
 
 # --- Row 1: Monthly bar + Expenses donut ---
@@ -89,7 +89,7 @@ with chart1:
         barmode="group",
         color_discrete_map={"Income": "#2ecc71", "Expense": "#e74c3c"},
     )
-    fig1.update_layout(margin=dict(t=20, b=20), legend_title_text="", yaxis_title="£")
+    fig1.update_layout(margin=dict(t=20, b=20), legend_title_text="", yaxis_title="$")
     st.plotly_chart(fig1, use_container_width=True)
 
 with chart2:
@@ -110,7 +110,7 @@ fig3 = px.line(
     df_sorted,
     x="date",
     y="cumulative_net",
-    labels={"date": "Date", "cumulative_net": "Cumulative Net (£)"},
+    labels={"date": "Date", "cumulative_net": "Cumulative Net ($)"},
 )
 fig3.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
 fig3.update_traces(line_color="#3498db")
@@ -123,7 +123,7 @@ if not expense_df.empty:
     top = expense_df.groupby(["type", "subtype"])["amount"].sum().reset_index()
     top.columns = ["Type", "Subtype", "Total"]
     top = top.sort_values("Total", ascending=False).head(10)
-    top["Total"] = top["Total"].map(lambda x: f"£{x:,.2f}")
+    top["Total"] = top["Total"].map(lambda x: f"${x:,.2f}")
     st.dataframe(top, hide_index=True, use_container_width=True)
 
 # --- Budget Tracker ---
@@ -152,9 +152,9 @@ else:
                 " ": status,
                 "Type": b["type"],
                 "Category": b["category"],
-                "Budget": f"£{b['monthly_budget']:,.2f}",
-                "Actual": f"£{b['monthly_actual']:,.2f}",
-                "Remaining": f"£{b['monthly_remaining']:,.2f}",
+                "Budget": f"${b['monthly_budget']:,.2f}",
+                "Actual": f"${b['monthly_actual']:,.2f}",
+                "Remaining": f"${b['monthly_remaining']:,.2f}",
                 "% Used": f"{pct:.0f}%",
             })
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
@@ -162,9 +162,9 @@ else:
         month_budget_total = sum(b["monthly_budget"] for b in budget_data if b["flow_type"] == "expense")
         month_actual_total = sum(b["monthly_actual"] for b in budget_data if b["flow_type"] == "expense")
         mb1, mb2, mb3 = st.columns(3)
-        mb1.metric("Total Budget (month)", f"£{month_budget_total:,.2f}")
-        mb2.metric("Total Actual (month)", f"£{month_actual_total:,.2f}")
-        mb3.metric("Remaining (month)", f"£{month_budget_total - month_actual_total:,.2f}")
+        mb1.metric("Total Budget (month)", f"${month_budget_total:,.2f}")
+        mb2.metric("Total Actual (month)", f"${month_actual_total:,.2f}")
+        mb3.metric("Remaining (month)", f"${month_budget_total - month_actual_total:,.2f}")
 
     with tab_year:
         st.caption(
@@ -179,11 +179,11 @@ else:
                 " ": status,
                 "Type": b["type"],
                 "Category": b["category"],
-                "Annual Budget": f"£{b['annual_budget']:,.2f}",
-                f"YTD Budget ({today.month}m)": f"£{b['ytd_budget']:,.2f}",
-                "YTD Actual": f"£{b['ytd_actual']:,.2f}",
-                "vs YTD Budget": f"£{diff:,.2f}",
-                "Projected Annual": f"£{b['projected_annual']:,.2f}" if b["projected_annual"] else "—",
+                "Annual Budget": f"${b['annual_budget']:,.2f}",
+                f"YTD Budget ({today.month}m)": f"${b['ytd_budget']:,.2f}",
+                "YTD Actual": f"${b['ytd_actual']:,.2f}",
+                "vs YTD Budget": f"${diff:,.2f}",
+                "Projected Annual": f"${b['projected_annual']:,.2f}" if b["projected_annual"] else "—",
             })
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
@@ -191,6 +191,6 @@ else:
         ytd_actual_total = sum(b["ytd_actual"] for b in budget_data if b["flow_type"] == "expense")
         projected_total = sum(b["projected_annual"] for b in budget_data if b["flow_type"] == "expense")
         yb1, yb2, yb3 = st.columns(3)
-        yb1.metric("Annual Budget (expenses)", f"£{annual_budget_total:,.2f}")
-        yb2.metric("YTD Actual (expenses)", f"£{ytd_actual_total:,.2f}")
-        yb3.metric("Projected Annual", f"£{projected_total:,.2f}")
+        yb1.metric("Annual Budget (expenses)", f"${annual_budget_total:,.2f}")
+        yb2.metric("YTD Actual (expenses)", f"${ytd_actual_total:,.2f}")
+        yb3.metric("Projected Annual", f"${projected_total:,.2f}")

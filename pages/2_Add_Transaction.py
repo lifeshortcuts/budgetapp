@@ -39,7 +39,7 @@ with st.form("transaction_details", clear_on_submit=True):
     col1, col2 = st.columns(2)
     with col1:
         tx_date = st.date_input("Date", value=date.today())
-        amount = st.number_input("Amount (£)", min_value=0.01, step=0.01, format="%.2f")
+        amount = st.number_input("Amount ($)", min_value=0.01, step=0.01, format="%.2f")
     with col2:
         description = st.text_input("Description", placeholder="e.g. Tesco, Monthly salary...")
         notes = st.text_area("Notes (optional)", height=100, placeholder="Any extra detail...")
@@ -59,6 +59,6 @@ if submitted:
             notes=notes,
         )
         st.success(
-            f"Saved: £{amount:.2f} — {selected_sub_name}"
+            f"Saved: ${amount:.2f} — {selected_sub_name}"
             + (f" ({description})" if description else "")
         )

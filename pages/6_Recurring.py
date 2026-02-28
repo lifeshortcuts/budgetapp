@@ -34,13 +34,13 @@ if recurrings:
         status_label = "✅ Active" if rec["active"] else "⏸️ Paused"
         label = (
             f"{flow_icon} {rec['description'] or rec['category']} — "
-            f"£{rec['amount']:,.2f} {rec['frequency'].lower()} | {status_label}"
+            f"${rec['amount']:,.2f} {rec['frequency'].lower()} | {status_label}"
         )
         with st.expander(label):
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1:
                 st.write(f"**Category:** {rec['type']} → {rec['category']}")
-                st.write(f"**Amount:** £{rec['amount']:,.2f}")
+                st.write(f"**Amount:** ${rec['amount']:,.2f}")
                 st.write(f"**Frequency:** {rec['frequency']}")
             with c2:
                 st.write(f"**Start date:** {rec['start_date']}")
@@ -86,7 +86,7 @@ st.markdown("")
 with st.form("add_recurring_form", clear_on_submit=True):
     fc1, fc2 = st.columns(2)
     with fc1:
-        rec_amount = st.number_input("Amount (£)", min_value=0.01, step=1.0, format="%.2f")
+        rec_amount = st.number_input("Amount ($)", min_value=0.01, step=1.0, format="%.2f")
         rec_desc = st.text_input("Description", placeholder="e.g. Monthly rent, Netflix...")
         rec_freq = st.selectbox(
             "Frequency", ["Monthly", "Weekly", "Fortnightly", "Quarterly", "Annually"]
@@ -116,7 +116,7 @@ with st.form("add_recurring_form", clear_on_submit=True):
                 end_date=rec_end if rec_has_end else None,
             )
             st.success(
-                f"Added: £{rec_amount:,.2f} {rec_freq.lower()} — {selected_sub}"
+                f"Added: ${rec_amount:,.2f} {rec_freq.lower()} — {selected_sub}"
                 + (f" ({rec_desc})" if rec_desc else "")
             )
             st.info(

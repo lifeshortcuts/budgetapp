@@ -115,7 +115,7 @@ for r in valid_rows:
     preview_rows.append({
         "Date": r["date"].strftime("%d %b %Y"),
         "Flow": r["flow_type"].capitalize(),
-        "Amount (£)": f"£{r['amount']:,.2f}",
+        "Amount ($)": f"${r['amount']:,.2f}",
         "Description": r["description"],
         "Bank Category": r["bank_category"],
         "Mapped To": mapped_label,
@@ -126,8 +126,8 @@ st.dataframe(pd.DataFrame(preview_rows), hide_index=True, use_container_width=Tr
 income_total = sum(r["amount"] for r in valid_rows if r["flow_type"] == "income")
 expense_total = sum(r["amount"] for r in valid_rows if r["flow_type"] == "expense")
 pt1, pt2, pt3 = st.columns(3)
-pt1.metric("Income rows", f"£{income_total:,.2f}")
-pt2.metric("Expense rows", f"£{expense_total:,.2f}")
+pt1.metric("Income rows", f"${income_total:,.2f}")
+pt2.metric("Expense rows", f"${expense_total:,.2f}")
 pt3.metric("Unmapped (need editing)", unmapped_count)
 
 # --- Import button ---

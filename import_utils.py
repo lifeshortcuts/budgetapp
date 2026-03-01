@@ -17,23 +17,23 @@ import pandas as pd
 # None means intentionally unmapped → will be marked Uncategorised.
 # ---------------------------------------------------------------------------
 BANK_TO_SUBCAT = {
-    "cafe & coffee":          "dining out",
-    "subscriptions":          "subscriptions",
+    "cafe & coffee":          "coffee",
+    "subscriptions":          "tv subscriptions",
     "groceries":              "groceries",
-    "medical":                "gp / prescriptions",
-    "media":                  "subscriptions",
-    "gym & fitness":          "hobbies",
+    "medical":                "medical",
+    "media":                  "tv subscriptions",
+    "gym & fitness":          None,
     "uncategorised":          None,
-    "travel expenses":        "miscellaneous",
-    "fuel":                   "fuel",
+    "travel expenses":        None,
+    "fuel":                   "running",
     "restaurants & takeaway": "dining out",
-    "insurance":              "health insurance",
-    "other shopping":         "miscellaneous",
-    "home improvements":      "repairs & maintenance",
+    "insurance":              None,
+    "other shopping":         None,
+    "home improvements":      "r&m",
     "phone & internet":       "internet",
     "alcohol":                "dining out",
     "clothing & accessories": "clothing",
-    "internal transfers":     "credit card payment",
+    "internal transfers":     None,
 }
 
 

@@ -2,7 +2,7 @@ import streamlit as st
 
 from db.crud import process_recurring_transactions
 from db.database import init_db
-from db.seed import seed_categories
+from db.seed import run_migrations, seed_categories
 
 st.set_page_config(
     page_title="Budget Tracker",
@@ -12,6 +12,7 @@ st.set_page_config(
 
 init_db()
 seed_categories()
+run_migrations()
 
 # Process recurring transactions once per browser session
 if "recurring_processed" not in st.session_state:

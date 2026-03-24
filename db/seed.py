@@ -88,8 +88,16 @@ def ensure_uncategorised_category():
 def seed_categories():
     session = get_session()
     try:
-        if session.query(Category).count() > 0:
-            return
+        count = session.query(Category).count()
+    finally:
+        session.close()
+
+    if count > 0:
+        run_migrations()
+        return
+
+    session = get_session()
+    try:
         for item in SEED_DATA:
             parent = Category(name=item["name"], flow_type=item["flow_type"], parent_id=None)
             session.add(parent)
